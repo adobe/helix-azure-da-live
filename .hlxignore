@@ -6,3 +6,4 @@ test/*
 LICENSE
 web-test-runner.config.js
 commitlint.config.js
+tools/*
