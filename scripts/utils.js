@@ -9,7 +9,6 @@
  * OF ANY KIND, either express or implied. See the License for the specific language
  * governing permissions and limitations under the License.
  */
-
 export function sanitizeName(name, preserveDots = true, allowUnderscores = true) {
   if (!name) return null;
 
@@ -75,7 +74,7 @@ export const [setNx, getNx] = (() => {
         if (branch === 'local') return `http://localhost:6456${nxVerBase}`;
 
         // Otherwise use a fully qualified branch
-        return `https://${branch}--da-nx--adobe.aem.live${nxVerBase}`;
+        return `https://${branch}--helix-azure-da-nx--adobe.aem.live${nxVerBase}`;
       })();
       return nx;
     }, () => nx,
