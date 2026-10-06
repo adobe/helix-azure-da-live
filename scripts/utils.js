@@ -74,7 +74,7 @@ export const [setNx, getNx] = (() => {
         if (branch === 'local') return `http://localhost:6456${nxVerBase}`;
 
         // Otherwise use a fully qualified branch
-        return `https://${branch}--helix-azure-da-nx--adobe.aem.live${nxVerBase}`;
+        return `https://${branch}--helix-azure-da-nx--adobe.az-boxa.aem.live${nxVerBase}`;
       })();
       return nx;
     }, () => nx,
