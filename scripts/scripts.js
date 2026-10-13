@@ -49,13 +49,13 @@ link.setAttribute('href', `${nx}${nxCSS}`);
 document.head.appendChild(link);
 
 const CONFIG = {
-  hostnames: ['da.live', 'da.page'],
+  hostnames: ['da.az-boxa.aem.live'],
   codeBase: import.meta.url.replace('/scripts/scripts.js', ''),
   providers: { da: window.location.origin },
   decorateArea,
   imsClientId: 'azure_da',
   // imsScope: 'ab.manage,AdobeID,gnav,openid,org.read,read_organizations,session,aem.frontend.all,additional_info.ownerOrg,additional_info.projectedProductContext,account_cluster.read',
-  imsScope: 'ab.manage,AdobeID,gnav,openid,org.read,read_organizations,session,additional_info.ownerOrg,additional_info.projectedProductContext,account_cluster.read',
+  imsScope: 'AdobeID,gnav,openid,org.read,read_organizations,session,additional_info.ownerOrg,additional_info.projectedProductContext,account_cluster.read',
 };
 
 export default async function loadPage() {
