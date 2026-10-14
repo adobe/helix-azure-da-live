@@ -62,7 +62,7 @@ export const [setNx, getNx] = (() => {
       nx = (() => {
         const { hostname, search } = location || window.location;
         const nxBaseParam = sanitizeName(new URLSearchParams(search).get('nx'));
-        const isProd = !(hostname.includes('.aem.') || hostname.includes('local'));
+        const isProd = !(hostname.includes('--') || hostname.includes('local'));
 
         // If no custom nexter branch & on prod, use the default CDN route
         if (!nxBaseParam && isProd) return nxVerBase;

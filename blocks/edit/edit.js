@@ -59,9 +59,9 @@ async function setUI(el) {
   prosePromise ??= import('./prose/index.js');
 
   // Start WebSocket as soon as prose module loads (don't wait for logins/doc)
-  const wsPromise = prosePromise.then(
-    (mod) => mod.createConnection(details.sourceUrl),
-  );
+  // const wsPromise = prosePromise.then(
+  //   (mod) => mod.createConnection(details.sourceUrl),
+  // );
 
   document.title = `Edit ${details.name} - DA`;
 
@@ -127,7 +127,7 @@ async function setUI(el) {
       permissions,
       doc,
       daContent,
-      wsPromise,
+      // wsPromise,
     });
 
     // Load editor tabs (live preview, versions, etc.)

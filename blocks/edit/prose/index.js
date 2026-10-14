@@ -517,14 +517,14 @@ function applyDelayedPlugins(pluginsPromise, schema, canWrite, basePlugins) {
 }
 
 // eslint-disable-next-line no-unused-vars
-export default async function initProse({ path, permissions, doc, daContent, wsPromise }) {
+export default async function initProse({ path, permissions, doc, daContent/*, wsPromise*/ }) {
   // Destroy ProseMirror if it already exists - GH-212
   if (window.view) {
     window.view.destroy();
     delete window.view;
   }
 
-  const connectionPromise = wsPromise || createConnection(path);
+  // const connectionPromise = wsPromise || createConnection(path);
 
   const editor = document.createElement('div');
   editor.className = 'da-prose-mirror';
@@ -532,11 +532,11 @@ export default async function initProse({ path, permissions, doc, daContent, wsP
   const schema = getSchema();
   const canWrite = permissions.some((permission) => permission === 'write');
 
-  const { wsProvider, ydoc } = await connectionPromise;
+  // const { wsProvider, ydoc } = await connectionPromise;
 
-  addSyncedListener(wsProvider, canWrite);
-  createAwarenessStatusWidget(wsProvider, window, path);
-  registerErrorHandler(ydoc);
+  // addSyncedListener(wsProvider, canWrite);
+  // createAwarenessStatusWidget(wsProvider, window, path);
+  // registerErrorHandler(ydoc);
 
   const yXmlFragment = ydoc.getXmlFragment('prosemirror');
 
