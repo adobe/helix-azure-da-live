@@ -1,4 +1,4 @@
-export const AEM_ORIGIN = 'https://admin.hlx.page';
+export const AEM_ORIGIN = 'about:error'; // no longer supported
 
 export const SUPPORTED_FILES = {
   html: 'text/html',

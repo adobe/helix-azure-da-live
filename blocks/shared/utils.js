@@ -1,10 +1,10 @@
 import { DA_ORIGIN, CON_ORIGIN, DA_ETC_ORIGIN, getLivePreviewUrl, AEM_ORIGIN } from './constants.js';
 import { getNx, getNx2Api } from '../../scripts/utils.js';
 
-const DA_ORIGINS = ['https://da.live', 'https://da.page', 'https://admin.da.live', 'https://admin.da.page', 'https://stage-admin.da.live', 'https://content.da.live', 'http://localhost:8787'];
-const AEM_API_ORIGIN = 'https://api.aem.live';
-const AEM_ORIGINS = ['https://admin.hlx.page', 'https://admin.aem.live', AEM_API_ORIGIN];
-const ETC_ORIGINS = ['https://stage-content.da.live', 'https://helix-snapshot-scheduler-ci.adobeaem.workers.dev', 'https://helix-snapshot-scheduler-prod.adobeaem.workers.dev'];
+const DA_ORIGINS = ['https://da.az-boxa.aem.live'];
+const AEM_API_ORIGIN = 'https://api.az-boxa.aem.live';
+const AEM_ORIGINS = [AEM_API_ORIGIN];
+const ETC_ORIGINS = [];
 const ALLOWED_TOKEN = [...DA_ORIGINS, ...AEM_ORIGINS, ...ETC_ORIGINS];
 
 let imsDetails;
