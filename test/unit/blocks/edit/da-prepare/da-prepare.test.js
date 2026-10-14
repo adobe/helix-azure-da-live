@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import { expect } from '@esm-bundle/chai';
+import sinon from 'sinon';
 import { setNx } from '../../../../../scripts/utils.js';
 
 const nextFrame = () => new Promise((resolve) => { setTimeout(resolve, 0); });
@@ -65,6 +66,8 @@ describe('DaPrepare', () => {
   }
 
   afterEach(() => {
+    sinon.restore();
+    document.querySelectorAll('.nx-toast').forEach((toast) => toast.remove());
     if (el && el.parentElement) el.remove();
     el = null;
   });
@@ -314,6 +317,48 @@ describe('DaPrepare', () => {
   });
 
   describe('handleItemClick', () => {
+    it('waits for source persistence before rendering an action', async () => {
+      el = await fixture();
+      let finishSave;
+      const forceSave = sinon.stub().returns(new Promise((resolve) => { finishSave = resolve; }));
+      sinon.stub(document, 'querySelector').callThrough()
+        .withArgs('da-content').returns({ forceSave });
+      const render = sinon.stub().resolves(document.createElement('div'));
+      const opening = el.handleItemClick({ title: 'Action', render });
+      expect(render.called).to.be.false;
+      finishSave({ ok: true });
+      await opening;
+      expect(render.calledOnce).to.be.true;
+    });
+
+    it('keeps the menu open and reports a failed save instead of starting an action', async () => {
+      el = await fixture();
+      el._showMenu = true;
+      sinon.stub(document, 'querySelector').callThrough().withArgs('da-content')
+        .returns({ forceSave: sinon.stub().resolves({ ok: false, error: 'Source unavailable' }) });
+      const render = sinon.stub();
+      await el.handleItemClick({ title: 'Action', render });
+      expect(render.called).to.be.false;
+      expect(el._showMenu).to.be.true;
+      expect(document.querySelector('.nx-toast').textContent).to.include('Source unavailable');
+    });
+
+    it('reports a failed preflight request when source persistence fails', async () => {
+      el = await fixture();
+      const { PREFLIGHT_EVENT } = await import('../../../../fixtures/nx2/utils/preflight-events.js');
+      sinon.stub(document, 'querySelector').callThrough().withArgs('da-content')
+        .returns({ forceSave: sinon.stub().resolves({ ok: false, error: 'Source unavailable' }) });
+      const status = sinon.spy();
+      document.addEventListener(PREFLIGHT_EVENT.STATUS, status);
+      try {
+        await el.handlePreflightRun({ detail: { paths: [el.details.fullpath], requestId: 'offline-preflight' } });
+        expect(el._dialogItem).to.be.undefined;
+        expect(status.firstCall.args[0].detail).to.deep.equal({ path: el.details.fullpath, status: 'fail', requestId: 'offline-preflight' });
+      } finally {
+        document.removeEventListener(PREFLIGHT_EVENT.STATUS, status);
+      }
+    });
+
     it('closes the menu', async () => {
       el = await fixture();
       el._showMenu = true;

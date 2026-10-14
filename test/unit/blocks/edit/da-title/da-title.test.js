@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import { expect } from '@esm-bundle/chai';
+import sinon from 'sinon';
 import { setNx } from '../../../../../scripts/utils.js';
 
 const nextFrame = () => new Promise((resolve) => { setTimeout(resolve, 0); });
@@ -64,6 +65,7 @@ describe('DaTitle', () => {
   }
 
   afterEach(() => {
+    sinon.restore();
     if (el && el.parentElement) el.remove();
     el = null;
   });
@@ -99,6 +101,34 @@ describe('DaTitle', () => {
     el = await fixture();
     const sendBtn = el.shadowRoot.querySelector('.da-title-action-send');
     expect(sendBtn).to.exist;
+  });
+
+  it('shows offline save status instead of websocket status', async () => {
+    el = await fixture({ collabStatus: 'connected' });
+    el.saveState = { status: 'saved' };
+    await el.updateComplete;
+    expect(el.shadowRoot.querySelector('.collab-status-cloud').dataset.popupContent)
+      .to.equal('Saved');
+    el.saveState = { status: 'saving' };
+    await el.updateComplete;
+    expect(el.shadowRoot.querySelector('.collab-status-cloud').dataset.popupContent)
+      .to.equal('Saving...');
+  });
+
+  it('displays failed offline saves and retries through the editor host', async () => {
+    el = await fixture({ collabStatus: 'error' });
+    const forceSave = sinon.stub().resolves({ ok: true });
+    sinon.stub(document, 'querySelector').callThrough()
+      .withArgs('da-content').returns({ forceSave });
+    el.saveState = { status: 'error', error: 'Source unavailable' };
+    await el.updateComplete;
+    const error = el.shadowRoot.querySelector('[role="alert"]');
+    expect(error.textContent).to.include('Source unavailable');
+    error.querySelector('button').click();
+    expect(forceSave.calledOnce).to.be.true;
+    el.saveState = { status: 'saved' };
+    await el.updateComplete;
+    expect(el.shadowRoot.querySelector('[role="alert"]')).to.be.null;
   });
 
   describe('_readOnly', () => {

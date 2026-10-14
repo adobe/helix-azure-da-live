@@ -39,6 +39,7 @@ export const canvasBus = Object.freeze({
   editorViewRequest: createChannel(),
   undoRequest: createChannel(),
   redoRequest: createChannel(),
+  editorSaveRequest: createChannel(),
   newVersionRequest: createChannel(),
   commentComposeRequest: createChannel(),
   blockEditRequest: createChannel(),
@@ -46,6 +47,7 @@ export const canvasBus = Object.freeze({
   toolbarSurfaceRequest: createChannel(),
 
   undoState: createChannel(),
+  editorSaveState: createChannel({ replay: true }),
   editorViewState: createChannel({ replay: true }),
   blockEditState: createChannel({ replay: true }),
   toolbarSurfaceState: createChannel({ replay: true }),

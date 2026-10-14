@@ -1,0 +1,24 @@
+import { Y } from 'da-y-wrapper';
+import { aem2doc, getSchema, yDocToProsemirror, EMPTY_DOC } from 'da-parser';
+import { fetchDoc } from './source.js';
+import { sessionErrorFromResponse } from './load-editor-doc.js';
+
+export async function loadLocalDocument(sourceUrl) {
+  const resp = await fetchDoc(sourceUrl);
+  const failure = sessionErrorFromResponse(resp);
+  if (failure) throw new Error(failure.error);
+  const missing = resp.status === 404;
+  const body = missing ? EMPTY_DOC : await resp.text();
+  const ydoc = new Y.Doc();
+  try {
+    aem2doc(body, ydoc);
+    return {
+      initialDoc: yDocToProsemirror(getSchema(), ydoc),
+      initialMetadata: Object.fromEntries(ydoc.getMap('daMetadata').entries()),
+      docId: resp.headers?.get('x-da-id') ?? null,
+      missing,
+    };
+  } finally {
+    ydoc.destroy();
+  }
+}

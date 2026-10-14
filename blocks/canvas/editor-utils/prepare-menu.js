@@ -3,6 +3,7 @@ import { getNx } from '../../../scripts/utils.js';
 import { fetchDaConfigs, getPostMessageTargetOrigin } from '../../shared/utils.js';
 import { canvasBus } from '../utils/canvas-bus.js';
 import { initPreflightBridge, reportPreflightStatus } from './preflight-bridge.js';
+import { getExtensionsBridge } from './extensions-bridge.js';
 
 const { loadStyle } = await import(`${getNx()}/utils/utils.js`);
 await import(`${getNx()}/blocks/shared/popover/popover.js`);
@@ -127,6 +128,7 @@ export default class PrepareMenu extends LitElement {
   }
 
   async handleItemClick(item) {
+    if (!await this._flushSource()) return;
     this._preflightRequestId = undefined;
     this.shadowRoot.querySelector('nx-popover').close();
     if (item.render) {
@@ -144,12 +146,26 @@ export default class PrepareMenu extends LitElement {
   handlePreflightRun = async (detail) => {
     const { paths, requestId } = detail || {};
     if (!paths || paths.length !== 1 || paths[0] !== this.details?.fullpath) return;
+    if (!await this._flushSource()) {
+      reportPreflightStatus({ path: this.details.fullpath, status: 'fail', requestId });
+      return;
+    }
     this.shadowRoot.querySelector('nx-popover')?.close();
     const render = (await import('../../edit/da-prepare/actions/preflight/preflight.js')).default;
     const cmp = render(this.details, requestId);
     this._preflightRequestId = requestId;
     this._dialogItem = { title: 'Preflight', cmp };
   };
+
+  async _flushSource() {
+    const { forceSave: flush } = getExtensionsBridge();
+    if (!flush) return true;
+    const result = await flush();
+    if (result.ok) return true;
+    const { showToast } = await import(`${getNx()}/blocks/shared/toast/toast.js`);
+    showToast({ text: result.error || 'Could not save the document.', variant: 'error' });
+    return false;
+  }
 
   handlePreflightStatus = (detail) => {
     const { requestId, status } = detail || {};

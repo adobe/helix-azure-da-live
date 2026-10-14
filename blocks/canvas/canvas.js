@@ -92,12 +92,27 @@ function editorCtxFromHashState(state, fullPath) {
   return { org: state.org, repo: state.site, path: fullPath };
 }
 
-async function syncCanvasEditorsToHash({ mountRoot, header, state }) {
+export async function syncCanvasEditorsToHash({ mountRoot, header, state }) {
   editorLoadCount += 1;
   const loadCount = editorLoadCount;
+  const fullPath = buildCanvasDocPath(state);
+  const currentEditor = mountRoot.querySelector('ew-editor-doc');
+  // A failed navigation restores this hash; do not replace the unsaved editor on that return.
+  if (currentEditor?.hasPendingSave && currentEditor.ctx?.path === fullPath) return;
+  const ctx = fullPath ? editorCtxFromHashState(state, fullPath) : null;
+  const session = ctx ? await resolveEditorDocSession(ctx) : null;
+  if (loadCount !== editorLoadCount) return;
+  // Flush after the destination lookup, including edits made while that lookup was pending.
+  if (currentEditor?.hasPendingSave) {
+    const saved = await currentEditor.forceSave();
+    if (loadCount !== editorLoadCount) return;
+    if (!saved.ok) {
+      window.location.hash = `#/${currentEditor.ctx.path}`;
+      return;
+    }
+  }
   header.undoAvailable = false;
   header.redoAvailable = false;
-  const fullPath = buildCanvasDocPath(state);
   const name = state?.path?.split('/').pop();
   document.title = `${name ? `Edit ${name} | ` : ''}Experience Workspace`;
   if (!fullPath) {
@@ -107,9 +122,6 @@ async function syncCanvasEditorsToHash({ mountRoot, header, state }) {
     header.canWrite = true;
     return;
   }
-  const ctx = editorCtxFromHashState(state, fullPath);
-  const session = await resolveEditorDocSession(ctx);
-  if (loadCount !== editorLoadCount) return;
   if (!session.ok) {
     removeCanvasEditors(mountRoot);
     showNotPermitted(mountRoot, session.error);

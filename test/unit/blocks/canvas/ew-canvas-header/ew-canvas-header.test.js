@@ -20,7 +20,10 @@ describe('ew-canvas-header segments', () => {
     await header.updateComplete;
   });
 
-  afterEach(() => header.remove());
+  afterEach(() => {
+    canvasBus.editorSaveState.emit(null);
+    header.remove();
+  });
 
   it('renders the Layout, Content and Split segments', async () => {
     header.editorView = 'layout';
@@ -50,5 +53,25 @@ describe('ew-canvas-header segments', () => {
 
     expect(requestedView).to.equal('content');
     expect(header.editorView).to.equal('content');
+  });
+
+  it('shows save failures and emits a retry request', async () => {
+    let retryRequested = false;
+    const unsubscribe = canvasBus.editorSaveRequest.subscribe(() => { retryRequested = true; });
+    try {
+      canvasBus.editorSaveState.emit({ status: 'error', error: 'Write denied' });
+      await header.updateComplete;
+      const status = header.shadowRoot.querySelector('[role="status"]');
+      expect(status.textContent).to.include('Could not save');
+      expect(status.title).to.equal('Write denied');
+      header.shadowRoot.querySelector('[data-action="retry-save"]').click();
+      expect(retryRequested).to.be.true;
+      canvasBus.editorSaveState.emit({ status: 'saved' });
+      await header.updateComplete;
+      expect(header.shadowRoot.querySelector('[role="status"]').textContent).to.include('Saved');
+      expect(header.shadowRoot.querySelector('[data-action="retry-save"]')).to.be.null;
+    } finally {
+      unsubscribe();
+    }
   });
 });

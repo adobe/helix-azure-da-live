@@ -1,6 +1,7 @@
 /* eslint-disable no-underscore-dangle */
 import { expect } from '@esm-bundle/chai';
 import { setNx } from '../../../../../scripts/utils.js';
+import { getExtensionsBridge } from '../../../../../blocks/canvas/editor-utils/extensions-bridge.js';
 
 const nextFrame = () => new Promise((resolve) => { setTimeout(resolve, 0); });
 
@@ -75,6 +76,38 @@ describe('PrepareMenu', () => {
   afterEach(() => {
     if (el && el.parentElement) el.remove();
     el = null;
+    getExtensionsBridge().forceSave = null;
+    document.querySelectorAll('.nx-toast').forEach((toast) => toast.remove());
+  });
+
+  it('flushes source edits before opening a Prepare action', async () => {
+    el = await fixture();
+    stubPopover(el);
+    const order = [];
+    getExtensionsBridge().forceSave = async () => {
+      order.push('save');
+      return { ok: true };
+    };
+    await el.handleItemClick({
+      title: 'Test',
+      render: async () => {
+        order.push('action');
+        return document.createElement('div');
+      },
+    });
+    expect(order).to.deep.equal(['save', 'action']);
+  });
+
+  it('does not run Prepare actions when source persistence fails', async () => {
+    el = await fixture();
+    let rendered = false;
+    getExtensionsBridge().forceSave = async () => ({ ok: false, error: 'Write denied' });
+    await el.handleItemClick({
+      title: 'Test',
+      render: async () => { rendered = true; },
+    });
+    expect(rendered).to.be.false;
+    expect(document.querySelector('.nx-toast').textContent).to.equal('Write denied');
   });
 
   it('is defined as a custom element', () => {

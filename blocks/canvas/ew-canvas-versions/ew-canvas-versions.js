@@ -112,6 +112,15 @@ class EwCanvasVersions extends LitElement {
     if (this._savingVersion) return;
     const label = e.target.elements.label?.value || '';
     this._savingVersion = true;
+    const { forceSave: flush } = getExtensionsBridge();
+    if (flush) {
+      const saved = await flush();
+      if (!saved.ok) {
+        this._savingVersion = false;
+        await showError(saved.error || 'Could not save the document before creating a version.');
+        return;
+      }
+    }
     const ok = await createVersion(this.path, label);
     this._savingVersion = false;
     if (!ok) {

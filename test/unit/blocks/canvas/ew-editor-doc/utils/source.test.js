@@ -5,10 +5,8 @@ setNx('/test/fixtures/nx', { hostname: 'example.com' });
 
 let buildSourceUrl;
 let checkDoc;
-
-before(async () => {
-  ({ buildSourceUrl, checkDoc } = await import('../../../../../../blocks/canvas/ew-editor-doc/utils/source.js'));
-});
+let fetchDoc;
+let saveDoc;
 
 // isHlx6 memoizes its answer per site, so each case needs its own org/site
 function stubPing({ upgraded }) {
@@ -21,6 +19,49 @@ function stubPing({ upgraded }) {
   };
   return { calls, restore: () => { window.fetch = saved; } };
 }
+
+before(async () => {
+  ({ buildSourceUrl, checkDoc, fetchDoc, saveDoc } = await import('../../../../../../blocks/canvas/ew-editor-doc/utils/source.js'));
+});
+
+describe('canvas source content', () => {
+  it('reads source content without caching', async () => {
+    const { calls, restore } = stubPing({ upgraded: false });
+    try {
+      await fetchDoc('https://admin.da.live/source/readorg/readsite/page.html');
+      expect(calls[0].opts.cache).to.equal('no-store');
+      expect(calls[0].opts.method).to.be.undefined;
+    } finally {
+      restore();
+    }
+  });
+
+  it('saves legacy HTML using the source API multipart format', async () => {
+    const { calls, restore } = stubPing({ upgraded: false });
+    try {
+      await saveDoc('saveorg/savesite/dir/page', '<body>Legacy</body>');
+      const write = calls.find((call) => call.opts?.method === 'POST');
+      expect(write.url).to.equal('https://admin.da.live/source/saveorg/savesite/dir/page.html');
+      expect(write.opts.body).to.be.instanceOf(FormData);
+      expect(await write.opts.body.get('data').text()).to.equal('<body>Legacy</body>');
+    } finally {
+      restore();
+    }
+  });
+
+  it('saves source-bus HTML as a raw HTML body', async () => {
+    const { calls, restore } = stubPing({ upgraded: true });
+    try {
+      await saveDoc('/savebus/savebus/dir/page', '<body>Source bus</body>');
+      const write = calls.find((call) => call.opts?.method === 'POST');
+      expect(write.url).to.equal('https://api.aem.live/savebus/sites/savebus/source/dir/page.html');
+      expect(write.opts.body).to.equal('<body>Source bus</body>');
+      expect(write.opts.headers['Content-Type']).to.equal('text/html');
+    } finally {
+      restore();
+    }
+  });
+});
 
 afterEach(() => {
   window.localStorage.removeItem('hlx6-upgrade');

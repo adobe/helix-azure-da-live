@@ -62,6 +62,7 @@ function buildFakeWsProvider({ withSynced = false } = {}) {
         states.set(clientID, { ...cur, [field]: value });
       },
       getStates() { return states; },
+      getLocalState() { return states.get(clientID); },
       on(event, cb) {
         if (!awarenessListeners.has(event)) awarenessListeners.set(event, []);
         awarenessListeners.get(event).push(cb);
@@ -806,12 +807,14 @@ describe('prose/index initProse default export', () => {
         set(v) {
           this._proseEl = v;
           // Wrap so getRootNode returns our host
-          v.getRootNode = () => ({ host });
+          if (v) v.getRootNode = () => ({ host });
           resolve(v);
         },
         get() { return this._proseEl; },
       });
-      initProse({ path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read', 'write'], doc: null, daContent: fakeContent, wsPromise });
+      initProse({
+        path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read', 'write'], doc: null, daContent: fakeContent, wsPromise, offline: false,
+      });
     });
 
     expect(proseEl).to.exist;
@@ -828,12 +831,14 @@ describe('prose/index initProse default export', () => {
     Object.defineProperty(fakeContent, 'proseEl', {
       configurable: true,
       set(v) {
-        v.getRootNode = () => ({ host: document.createElement('div') });
+        if (v) v.getRootNode = () => ({ host: document.createElement('div') });
         this._proseEl = v;
       },
       get() { return this._proseEl; },
     });
-    await initProse({ path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read'], doc: null, daContent: fakeContent, wsPromise });
+    await initProse({
+      path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read'], doc: null, daContent: fakeContent, wsPromise, offline: false,
+    });
     // ProseMirror exposes editable via someProp: it returns the editable() result
     expect(window.view.someProp('editable')(window.view)).to.be.false;
   });
@@ -845,13 +850,15 @@ describe('prose/index initProse default export', () => {
     Object.defineProperty(fakeContent, 'proseEl', {
       configurable: true,
       set(v) {
-        v.getRootNode = () => ({ host: document.createElement('div') });
+        if (v) v.getRootNode = () => ({ host: document.createElement('div') });
         this._proseEl = v;
       },
       get() { return this._proseEl; },
     });
     delete window.adobeIMS;
-    await initProse({ path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read', 'write'], doc: null, daContent: fakeContent, wsPromise });
+    await initProse({
+      path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read', 'write'], doc: null, daContent: fakeContent, wsPromise, offline: false,
+    });
     const states = [...provider.awareness.getStates().values()];
     const userState = states.find((s) => s.user);
     expect(userState.user.name).to.equal('Anonymous');
@@ -865,7 +872,7 @@ describe('prose/index initProse default export', () => {
     Object.defineProperty(fakeContent, 'proseEl', {
       configurable: true,
       set(v) {
-        v.getRootNode = () => ({ host: document.createElement('div') });
+        if (v) v.getRootNode = () => ({ host: document.createElement('div') });
         this._proseEl = v;
       },
       get() { return this._proseEl; },
@@ -879,7 +886,9 @@ describe('prose/index initProse default export', () => {
       },
     };
     try {
-      await initProse({ path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read', 'write'], doc: null, daContent: fakeContent, wsPromise });
+      await initProse({
+        path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read', 'write'], doc: null, daContent: fakeContent, wsPromise, offline: false,
+      });
       await wait(10);
       expect(getProfileCalled).to.be.true;
     } finally {
@@ -895,12 +904,14 @@ describe('prose/index initProse default export', () => {
     Object.defineProperty(fakeContent, 'proseEl', {
       configurable: true,
       set(v) {
-        v.getRootNode = () => ({ host: document.createElement('div') });
+        if (v) v.getRootNode = () => ({ host: document.createElement('div') });
         this._proseEl = v;
       },
       get() { return this._proseEl; },
     });
-    await initProse({ path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read'], doc: null, daContent: fakeContent, wsPromise: Promise.resolve({ wsProvider: provider, ydoc }) });
+    await initProse({
+      path: 'https://admin.da.live/source/o/r/p.html', permissions: ['read'], doc: null, daContent: fakeContent, wsPromise: Promise.resolve({ wsProvider: provider, ydoc }), offline: false,
+    });
     expect(destroyed).to.equal(1);
   });
 });
@@ -917,7 +928,7 @@ describe('prose/index registerErrorHandler', () => {
     Object.defineProperty(fakeContent, 'proseEl', {
       configurable: true,
       set(v) {
-        v.getRootNode = () => ({ host: document.createElement('div') });
+        if (v) v.getRootNode = () => ({ host: document.createElement('div') });
         this._proseEl = v;
       },
       get() { return this._proseEl; },
@@ -934,6 +945,7 @@ describe('prose/index registerErrorHandler', () => {
       doc: null,
       daContent: fakeContent,
       wsPromise: Promise.resolve({ wsProvider: provider, ydoc }),
+      offline: false,
     });
     return ydoc;
   }

@@ -1,5 +1,6 @@
 /* eslint-disable no-underscore-dangle */
 import { expect } from '@esm-bundle/chai';
+import sinon from 'sinon';
 import { setNx } from '../../../../../scripts/utils.js';
 
 setNx('/test/fixtures/nx', { hostname: 'example.com' });
@@ -160,6 +161,9 @@ describe('create-version form', () => {
   let inst;
   afterEach(() => {
     inst?.remove(); inst = null;
+    getExtensionsBridge().forceSave = null;
+    document.querySelectorAll('.nx-toast').forEach((toast) => toast.remove());
+    sinon.restore();
   });
 
   it('handleNew opens the form with a prefilled, focused, selected input', async () => {
@@ -226,6 +230,35 @@ describe('create-version form', () => {
     expect(saveBtn.disabled).to.be.true;
     expect(saveBtn.getAttribute('aria-label')).to.equal('Saving');
     expect(saveBtn.querySelector('.da-loading-spinner')).to.exist;
+  });
+
+  it('waits for the source flush before creating a version', async () => {
+    inst = await createInstance({ path: '/flushorg/flushsite/doc.html', _versions: [] });
+    inst.handleNew();
+    sinon.stub(inst, '_load').resolves();
+    const fetch = sinon.stub(window, 'fetch').resolves(new Response('', { status: 201 }));
+    let finishFlush;
+    getExtensionsBridge().forceSave = () => new Promise((resolve) => { finishFlush = resolve; });
+    const submission = inst.handleNewSubmit({ preventDefault() {}, target: { elements: { label: { value: 'Saved snapshot' } } } });
+    expect(fetch.called).to.be.false;
+    expect(inst._savingVersion).to.be.true;
+    finishFlush({ ok: true });
+    await submission;
+    expect(fetch.getCalls().some((call) => call.args[1]?.method === 'POST')).to.be.true;
+    expect(inst._newVersion).to.be.null;
+  });
+
+  it('retains the version form and refuses to snapshot a failed source save', async () => {
+    inst = await createInstance({ path: '/org/site/doc.html', _versions: [] });
+    inst.handleNew();
+    const fetch = sinon.stub(window, 'fetch');
+    getExtensionsBridge().forceSave = sinon.stub().resolves({ ok: false, error: 'Write denied' });
+    await inst.handleNewSubmit({ preventDefault() {}, target: { elements: { label: { value: 'Unsaved snapshot' } } } });
+    await nextFrame();
+    expect(fetch.called).to.be.false;
+    expect(inst._savingVersion).to.be.false;
+    expect(inst._newVersion).to.not.be.null;
+    expect(document.querySelector('.nx-toast').textContent).to.equal('Write denied');
   });
 });
 
