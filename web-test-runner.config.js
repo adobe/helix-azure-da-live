@@ -43,6 +43,7 @@ export default {
         inject: {
           importMap: {
             imports: {
+              'https://main--helix-azure-da-nx--adobe.az-boxa.aem.live/nx/': '/test/fixtures/nx/',
               'da-y-wrapper': '/deps/da-y-wrapper/dist/index.js',
               'da-lit': '/deps/lit/dist/index.js',
               'da-parser': '/deps/da-parser/dist/index.js',

@@ -52,8 +52,8 @@ describe('Other origins', () => {
     expect(DA_ETC_ORIGIN).to.equal('https://da-etc.adobeaem.workers.dev');
   });
 
-  it('Sets AEM Origin', () => {
-    expect(AEM_ORIGIN).to.equal('https://admin.hlx.page');
+  it('Disables the unsupported legacy AEM origin', () => {
+    expect(AEM_ORIGIN).to.equal('about:error');
   });
 });
 

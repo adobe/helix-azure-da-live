@@ -380,6 +380,36 @@ describe('daFetch', () => {
     expect(resp.permissions).to.deep.equal(['read', 'write', 'delete']);
   });
 
+  it('Only attaches credentials to allowlisted Azure origins', async () => {
+    window.localStorage.setItem('nx-ims', 'true');
+    const savedIMS = window.adobeIMS;
+    const token = 'test-token';
+    window.adobeIMS = { getAccessToken: () => ({ token }) };
+    let capturedHeaders;
+    window.fetch = (url, opts) => {
+      capturedHeaders = new Headers(opts.headers);
+      return Promise.resolve(new Response('ok', { status: 200 }));
+    };
+
+    const cases = [
+      ['https://da.az-boxa.aem.live', true],
+      ['https://api.az-boxa.aem.live', true],
+      ['https://admin.da.live', false],
+      ['https://admin.hlx.page', false],
+      ['https://api.aem.live', false],
+      ['https://da.az-boxa.aem.live.example.com', false],
+    ];
+    try {
+      for (const [origin, allowed] of cases) {
+        await daFetch(`${origin}/test`);
+        expect(capturedHeaders.get('Authorization'), origin)
+          .to.equal(allowed ? `Bearer ${token}` : null);
+      }
+    } finally {
+      if (savedIMS === undefined) delete window.adobeIMS; else window.adobeIMS = savedIMS;
+    }
+  });
+
   it('Falls back to x-da-actions when x-da-child-actions is not present', async () => {
     window.localStorage.removeItem('nx-ims');
     window.fetch = () => Promise.resolve(new Response('ok', {
@@ -407,9 +437,7 @@ describe('daFetch', () => {
     window.fetch = () => Promise.resolve(new Response('nope', { status: 401 }));
 
     try {
-      // DA_ORIGINS in utils.js includes http://localhost:8787 — use that so the
-      // 401 path triggers without us needing to monkey-patch the origin list.
-      const resp = await daFetch('http://localhost:8787/source/o/r/p.html');
+      const resp = await daFetch('https://da.az-boxa.aem.live/source/o/r/p.html');
       // Wait for the dynamic banner import to settle.
       await new Promise((r) => { setTimeout(r, 80); });
 
@@ -445,7 +473,7 @@ describe('daFetch', () => {
     };
 
     try {
-      const resp = await daFetch('http://localhost:8787/source/o/r/p.html');
+      const resp = await daFetch('https://da.az-boxa.aem.live/source/o/r/p.html');
       expect(resp.ok).to.equal(true);
       expect(fetchCalls).to.equal(2);
       expect(capturedAuth).to.deep.equal(['Bearer stale', 'Bearer fresh']);
@@ -603,13 +631,15 @@ describe('getSidekickConfig', () => {
     window.localStorage.removeItem('hlx6-upgrade');
   });
 
-  it('Returns preview and prod when both hosts are available (legacy DA)', async () => {
+  it('Returns preview and prod when both hosts are available (HLX6)', async () => {
     const org = 'org1';
     const site = 'site1';
-    const configUrl = `https://admin.hlx.page/sidekick/${org}/${site}/main/config.json`;
+    const configUrl = `https://api.az-boxa.aem.live/${org}/sites/${site}/sidekick`;
 
     const mockFetch = (url) => {
-      if (String(url).includes('/ping/')) return Promise.resolve(new Response('', { status: 200 }));
+      if (String(url).includes('/ping/')) {
+        return Promise.resolve(new Response('', { status: 200, headers: { 'x-api-upgrade-available': 'true' } }));
+      }
       if (url === configUrl) {
         return Promise.resolve(new Response(JSON.stringify({
           previewHost: 'preview.example.com',
@@ -632,13 +662,15 @@ describe('getSidekickConfig', () => {
     }
   });
 
-  it('Returns object when only previewHost is available (legacy DA)', async () => {
+  it('Returns object when only previewHost is available (HLX6)', async () => {
     const org = 'org2';
     const site = 'site2';
-    const configUrl = `https://admin.hlx.page/sidekick/${org}/${site}/main/config.json`;
+    const configUrl = `https://api.az-boxa.aem.live/${org}/sites/${site}/sidekick`;
 
     const mockFetch = (url) => {
-      if (String(url).includes('/ping/')) return Promise.resolve(new Response('', { status: 200 }));
+      if (String(url).includes('/ping/')) {
+        return Promise.resolve(new Response('', { status: 200, headers: { 'x-api-upgrade-available': 'true' } }));
+      }
       if (url === configUrl) {
         return Promise.resolve(new Response(JSON.stringify({ previewHost: 'preview.example.com' }), { status: 200 }));
       }
@@ -655,13 +687,15 @@ describe('getSidekickConfig', () => {
     }
   });
 
-  it('Returns object when only host is available (legacy DA)', async () => {
+  it('Returns object when only host is available (HLX6)', async () => {
     const org = 'org3';
     const site = 'site3';
-    const configUrl = `https://admin.hlx.page/sidekick/${org}/${site}/main/config.json`;
+    const configUrl = `https://api.az-boxa.aem.live/${org}/sites/${site}/sidekick`;
 
     const mockFetch = (url) => {
-      if (String(url).includes('/ping/')) return Promise.resolve(new Response('', { status: 200 }));
+      if (String(url).includes('/ping/')) {
+        return Promise.resolve(new Response('', { status: 200, headers: { 'x-api-upgrade-available': 'true' } }));
+      }
       if (url === configUrl) {
         return Promise.resolve(new Response(JSON.stringify({ host: 'www.example.com' }), { status: 200 }));
       }
@@ -678,13 +712,15 @@ describe('getSidekickConfig', () => {
     }
   });
 
-  it('Returns empty object when neither previewHost nor host is available (legacy DA)', async () => {
+  it('Returns empty object when neither previewHost nor host is available (HLX6)', async () => {
     const org = 'org4';
     const site = 'site4';
-    const configUrl = `https://admin.hlx.page/sidekick/${org}/${site}/main/config.json`;
+    const configUrl = `https://api.az-boxa.aem.live/${org}/sites/${site}/sidekick`;
 
     const mockFetch = (url) => {
-      if (String(url).includes('/ping/')) return Promise.resolve(new Response('', { status: 200 }));
+      if (String(url).includes('/ping/')) {
+        return Promise.resolve(new Response('', { status: 200, headers: { 'x-api-upgrade-available': 'true' } }));
+      }
       if (url === configUrl) {
         return Promise.resolve(new Response(JSON.stringify({}), { status: 200 }));
       }
@@ -720,10 +756,10 @@ describe('getSidekickConfig', () => {
     }
   });
 
-  it('Uses api.aem.live for an HLX6 site', async () => {
+  it('Uses the Azure API for an HLX6 site', async () => {
     const org = 'sidekickhlx6org';
     const site = 'sidekickhlx6site';
-    const configUrl = `https://api.aem.live/${org}/sites/${site}/sidekick`;
+    const configUrl = `https://api.az-boxa.aem.live/${org}/sites/${site}/sidekick`;
 
     const mockFetch = (url) => {
       if (String(url).includes('/ping/')) {

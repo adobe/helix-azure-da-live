@@ -122,9 +122,7 @@ describe('canvas checkDoc', () => {
     }
   });
 
-  // da-admin keeps da-live's own fetcher, which reads the token live and retries once on a 401.
-  // nx2's takes the snapshot loadIms captured at page load and does neither.
-  it('asks da-admin for a legacy document, through the fetcher that can refresh a token', async () => {
+  it('does not send Azure credentials to the upstream legacy document store', async () => {
     window.localStorage.setItem('nx-ims', 'true');
     window.adobeIMS = { getAccessToken: () => ({ token: 'live-token' }) };
     const { calls, restore } = stubPing({ upgraded: false });
@@ -134,7 +132,7 @@ describe('canvas checkDoc', () => {
       const head = calls.find((c) => c.opts?.method === 'HEAD');
       expect(head, 'no HEAD was issued').to.exist;
       expect(head.url).to.equal('https://admin.da.live/source/checkleg/checkleg/page.html');
-      expect(new Headers(head.opts.headers).get('Authorization')).to.equal('Bearer live-token');
+      expect(new Headers(head.opts.headers).has('Authorization')).to.be.false;
     } finally {
       restore();
       window.localStorage.removeItem('nx-ims');

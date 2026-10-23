@@ -4,22 +4,22 @@ import { setNx, sanitizePath, sanitizePathParts, sanitizeName } from '../../../s
 describe('Libs', () => {
   it('Default Libs', () => {
     const libs = setNx('/nx');
-    expect(libs).to.equal('https://main--da-nx--adobe.aem.live/nx');
+    expect(libs).to.equal('https://main--helix-azure-da-nx--adobe.az-boxa.aem.live/nx');
   });
 
   it('Default NX on production / CDN', () => {
-    const location = { hostname: 'da.live' };
+    const location = { hostname: 'da.az-boxa.aem.live' };
     const libs = setNx('/nx', location);
     expect(libs).to.equal('/nx');
   });
 
   it('Supports NX query param on production', () => {
     const location = {
-      hostname: 'da.live',
+      hostname: 'da.az-boxa.aem.live',
       search: '?nx=foo',
     };
     const libs = setNx('/nx', location);
-    expect(libs).to.equal('https://foo--da-nx--adobe.aem.live/nx');
+    expect(libs).to.equal('https://foo--helix-azure-da-nx--adobe.az-boxa.aem.live/nx');
   });
 
   it('Supports NX query param', () => {
@@ -28,7 +28,7 @@ describe('Libs', () => {
       search: '?nx=foo',
     };
     const libs = setNx('/nx', location);
-    expect(libs).to.equal('https://foo--da-nx--adobe.aem.live/nx');
+    expect(libs).to.equal('https://foo--helix-azure-da-nx--adobe.az-boxa.aem.live/nx');
   });
 
   it('Supports local NX query param', () => {
@@ -38,6 +38,12 @@ describe('Libs', () => {
     };
     const libs = setNx('/nx', location);
     expect(libs).to.equal('http://localhost:6456/nx');
+  });
+
+  it('Uses the fork main branch for Azure preview hosts', () => {
+    const location = { hostname: 'preview--helix-azure-da-live--adobe.az-boxa.aem.live' };
+    expect(setNx('/nx', location))
+      .to.equal('https://main--helix-azure-da-nx--adobe.az-boxa.aem.live/nx');
   });
 
   describe('sanitizeName', () => {

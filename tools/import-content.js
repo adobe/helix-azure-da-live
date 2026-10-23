@@ -23,13 +23,11 @@ const CONTENT_TYPES = {
 };
 
 export async function listFiles(directory, prefix = '') {
-  const entries = await readdir(directory, { withFileTypes: true });
+  const entries = (await readdir(directory, { withFileTypes: true }))
+    .filter((entry) => !entry.name.startsWith('.'));
   entries.sort((a, b) => a.name.localeCompare(b.name));
   const files = [];
   for (const entry of entries) {
-    if (entry.name.startsWith('.')) {
-      continue;
-    }
     const relativePath = prefix ? `${prefix}/${entry.name}` : entry.name;
     if (entry.isDirectory()) {
       files.push(...await listFiles(join(directory, entry.name), relativePath));
