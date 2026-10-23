@@ -20,7 +20,9 @@ describe('ew-selection-toolbar buttons', () => {
     toolbar.view = editor.view;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
+    toolbar._hasAemAssets = false;
+    await toolbar.updateComplete;
     toolbar.view = null;
     destroyEditor(editor);
   });
@@ -45,6 +47,22 @@ describe('ew-selection-toolbar buttons', () => {
     const { from, to } = editor.view.state.selection;
     return editor.view.state.doc.rangeHasMark(from, to, editor.view.state.schema.marks[name]);
   }
+
+  it('allows all supported image formats in the upload picker', () => {
+    const savedClick = HTMLInputElement.prototype.click;
+    let accepted;
+    HTMLInputElement.prototype.click = function click() {
+      accepted = this.accept.split(',');
+    };
+    try {
+      toolbar.triggerAddImage();
+      expect(accepted).to.include.members([
+        'image/svg+xml', 'image/png', 'image/jpeg', 'image/gif', 'image/avif', 'image/webp',
+      ]);
+    } finally {
+      HTMLInputElement.prototype.click = savedClick;
+    }
+  });
 
   it('applies superscript to the selected range', async () => {
     setText('hello');
@@ -106,6 +124,51 @@ describe('ew-selection-toolbar buttons', () => {
     });
     expect(imgNode.attrs.alt).to.equal('New alt');
     expect(toolbar.altDialogOpen).to.be.false;
+  });
+
+  it('shows Replace image with the image icon only when an image is selected', async () => {
+    toolbar.activeSurface = 'doc';
+    await toolbar.updateComplete;
+
+    let button = toolbar.shadowRoot.querySelector('button[data-id="image-add"]');
+    expect(button.getAttribute('aria-label')).to.equal('Add image');
+    expect(button.querySelector('use').getAttribute('href'))
+      .to.equal('/img/icons/s2-icon-imageadd-20-n.svg#icon');
+
+    selectImage();
+    toolbar.requestUpdate();
+    await toolbar.updateComplete;
+
+    button = toolbar.shadowRoot.querySelector('button[data-id="image-add"]');
+    expect(button.getAttribute('aria-label')).to.equal('Replace image');
+    expect(button.getAttribute('title')).to.equal('Replace image');
+    expect(button.querySelector('use').getAttribute('href'))
+      .to.equal('/img/icons/s2-icon-image-20-n.svg#icon');
+  });
+
+  it('shows Replace image on the AEM Assets menu trigger for a selected image', async () => {
+    selectImage();
+    toolbar.activeSurface = 'doc';
+    toolbar._hasAemAssets = true;
+    await toolbar.updateComplete;
+
+    const button = toolbar.shadowRoot.querySelector('nx-menu button[slot="trigger"][aria-label="Replace image"]');
+    expect(button).to.exist;
+    expect(button.getAttribute('title')).to.equal('Replace image');
+    expect(button.querySelector('use').getAttribute('href'))
+      .to.equal('/img/icons/s2-icon-image-20-n.svg#icon');
+  });
+
+  it('closes a menu when the toolbar is hidden', async () => {
+    toolbar.activeSurface = 'doc';
+    toolbar._hasAemAssets = true;
+    await toolbar.updateComplete;
+
+    const menu = toolbar.shadowRoot.querySelector('nx-menu');
+    expect(menu).to.exist;
+    menu.open = true;
+    toolbar.hide();
+    expect(menu.open).to.be.false;
   });
 
   it('opens the link dialog with show-title enabled', async () => {
@@ -188,5 +251,32 @@ describe('ew-selection-toolbar buttons', () => {
     expect(toolbar.shadowRoot.querySelector('button[data-id="bullet-list"]'), 'bullet-list').to.not.exist;
     expect(toolbar.shadowRoot.querySelector('button[data-id="image-add"]'), 'add image').to.not.exist;
     expect(toolbar.shadowRoot.querySelector('button[data-id="strong"]'), 'strong').to.exist;
+  });
+
+  it('shows Replace image for a selected image in the wysiwyg surface', async () => {
+    selectImage();
+    toolbar.activeSurface = 'wysiwyg';
+    toolbar.requestUpdate();
+    await toolbar.updateComplete;
+
+    const button = toolbar.shadowRoot.querySelector('button[data-id="image-add"]');
+    expect(button).to.exist;
+    expect(button.getAttribute('aria-label')).to.equal('Replace image');
+    expect(button.getAttribute('title')).to.equal('Replace image');
+    expect(button.querySelector('use').getAttribute('href'))
+      .to.equal('/img/icons/s2-icon-image-20-n.svg#icon');
+  });
+
+  it('shows Replace image on the AEM Assets trigger in the wysiwyg surface', async () => {
+    selectImage();
+    toolbar.activeSurface = 'wysiwyg';
+    toolbar._hasAemAssets = true;
+    toolbar.requestUpdate();
+    await toolbar.updateComplete;
+
+    const button = toolbar.shadowRoot.querySelector('nx-menu button[slot="trigger"][aria-label="Replace image"]');
+    expect(button).to.exist;
+    expect(button.querySelector('use').getAttribute('href'))
+      .to.equal('/img/icons/s2-icon-image-20-n.svg#icon');
   });
 });
