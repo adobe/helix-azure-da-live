@@ -41,6 +41,7 @@ export const canvasBus = Object.freeze({
   redoRequest: createChannel(),
   editorSaveRequest: createChannel(),
   newVersionRequest: createChannel(),
+  comparisonRequest: createChannel(),
   commentComposeRequest: createChannel(),
   blockEditRequest: createChannel(),
   preflightRunRequest: createChannel(),
@@ -48,6 +49,7 @@ export const canvasBus = Object.freeze({
 
   undoState: createChannel(),
   editorSaveState: createChannel({ replay: true }),
+  mergeConflictsState: createChannel(),
   editorDocState: createChannel(),
   editorViewState: createChannel({ replay: true }),
   blockEditState: createChannel({ replay: true }),
@@ -67,6 +69,7 @@ export const canvasBus = Object.freeze({
   wysiwygPortReady: createChannel({ replay: true }),
 
   commentsControllerState: createChannel(),
+  versionCreatedState: createChannel(),
 
   preflightStatusState: createChannel(),
 });

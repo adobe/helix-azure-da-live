@@ -20,6 +20,8 @@ import { resolveEditorDocSession, createdDocSession } from './ew-editor-doc/util
 import { SEL_BLOCK, SEL_ITEM, SEL_TEXT } from './ew-editor-doc/utils/selection.js';
 import { getChatPanelContent } from '../shared/chat-panel.js';
 import { canvasBus } from './utils/canvas-bus.js';
+import { installComparison } from './ew-comparison/comparison.js';
+import { docToHtml } from '../shared/version/compare.js';
 
 const { loadStyle, hashChange } = await import(`${getNx()}/utils/utils.js`);
 const { CHAT_EVENT } = await import(`${getNx()}/utils/chat.js`);
@@ -223,6 +225,7 @@ async function installCanvasHeader(block, { org, site }) {
   header.editorView = await readInitialCanvasEditorView({ org, site });
   canvasBus.editorViewRequest.subscribe(({ view: rawView }) => {
     const view = normalizeCanvasEditorView(rawView);
+    header.editorView = view;
     persistCanvasEditorView(view);
     notifyCanvasEditorActive(view);
     syncEditorSplitLayout({ mountRoot: canvasEditorMountRoot(block), view });
@@ -325,12 +328,33 @@ export default async function decorate(block) {
   syncEditorSplitLayout({ mountRoot, view: header.editorView });
   installEditorSplitDrag(mountRoot);
 
+  canvasBus.mergeConflictsState.subscribe((detail) => {
+    header.hasUnresolvedMergeConflicts = detail?.hasMergeConflicts ?? false;
+    if (header.hasUnresolvedMergeConflicts && header.editorView !== 'content') {
+      canvasBus.editorViewRequest.emit({ view: 'content' });
+    }
+  });
+
+  let comparisonContext;
+  const comparison = installComparison({
+    mountRoot,
+    getContext: () => comparisonContext,
+    getDocument: () => {
+      const { view } = mountRoot.querySelector('ew-editor-doc')
+        ?.getComparisonSession(comparisonContext) || {};
+      return view ? docToHtml(view) : undefined;
+    },
+    saveDocument: () => mountRoot.querySelector('ew-editor-doc')?.saveForComparison(comparisonContext),
+  });
+
   canvasBus.undoState.subscribe((detail) => {
     header.undoAvailable = detail?.canUndo ?? false;
     header.redoAvailable = detail?.canRedo ?? false;
   });
 
   hashChange.subscribe((state) => {
+    comparisonContext = state;
+    comparison.contextChanged();
     syncCanvasEditorsToHash({ mountRoot, header, state });
     const toolPanel = document.querySelector('aside.panel[data-position="after"] ew-tool-panel');
     if (toolPanel) syncToolPanelViews(toolPanel, state);
