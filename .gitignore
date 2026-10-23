@@ -109,6 +109,7 @@ typings/
 .github/copilot/settings.local.json
 /.scout
 docs/superpowers/
+.pi
 
 .hlx/.da-token*.json
 
