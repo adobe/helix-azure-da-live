@@ -2,6 +2,7 @@
 import { expect } from '@esm-bundle/chai';
 import { NodeSelection, TextSelection } from 'da-y-wrapper';
 import { setNx } from '../../../../../scripts/utils.js';
+import { canvasBus } from '../../../../../blocks/canvas/utils/canvas-bus.js';
 import { createTestEditor, destroyEditor } from '../../edit/prose/test-helpers.js';
 
 setNx('/test/fixtures/nx', { hostname: 'example.com' });
@@ -400,6 +401,40 @@ describe('EwEditorDoc — _broadcastSelectedNode text-selection fallback (#1220)
     expect(messages[1].scrollIntoView).to.equal(true);
   });
 
+  ['table', 'image'].forEach((anchorType) => {
+    it(`acknowledges an iframe ${anchorType} selection without scrolling, then permits doc navigation`, async () => {
+      const { handleNodeSelect } = await import('../../../../../blocks/canvas/ew-editor-wysiwyg/utils/handlers.js');
+      destroyEditor(editor);
+      const onSelection = () => el._broadcastSelectedNode(true);
+      const trackingPlugin = createTrackingPlugin(null, null, null, onSelection);
+      editor = await createTestEditor({ additionalPlugins: [trackingPlugin] });
+      ctx.view = editor.view;
+      el._proseContext = { view: editor.view };
+      const proseIndex = anchorType === 'table'
+        ? buildTableDoc(editor.view).tablePos + 1
+        : buildDoc(editor.view).imagePos;
+      const node = { anchorType, proseIndex };
+      messages.length = 0;
+      el._lastBroadcastNodeKey = undefined;
+
+      handleNodeSelect({ node }, ctx);
+
+      expect(editor.view.state.selection).to.be.instanceOf(NodeSelection);
+      expect(messages).to.have.lengthOf(1);
+      expect(messages[0].payload.node).to.include(node);
+      expect(messages[0].scrollIntoView).to.equal(false);
+      expect(messages[0].payload.scrollIntoView).to.equal(false);
+      expect(ctx.mirroringFromIframe).to.equal(false);
+
+      // Explicit doc/outline navigation must still re-scroll even to the same node.
+      el._broadcastSelectedNode(true);
+      expect(messages).to.have.lengthOf(2);
+      expect(messages[1].payload.node).to.include(node);
+      expect(messages[1].scrollIntoView).to.equal(true);
+      expect(messages[1].payload.scrollIntoView).to.equal(true);
+    });
+  });
+
   describe('selections inside a block (table)', () => {
     let tableStarts;
 
@@ -477,5 +512,21 @@ describe('EwEditorDoc — _broadcastSelectedNode text-selection fallback (#1220)
       expect(messages[0].node).to.equal(null);
       expect(messages[0].scrollIntoView).to.equal(false);
     });
+  });
+});
+
+describe('EwEditorDoc - teardown on removal (#1406)', () => {
+  it('broadcasts empty editor html when the element is removed', () => {
+    const el = document.createElement('ew-editor-doc');
+    document.body.append(el);
+    canvasBus.editorHtmlState.emit('<main><div><p>hi</p></div></main>');
+    const seen = [];
+    const unsub = canvasBus.editorHtmlState.subscribe((html) => seen.push(html));
+    seen.length = 0;
+    el.remove();
+    unsub();
+    canvasBus.editorHtmlState.emit('');
+    expect(seen.length > 0).to.equal(true);
+    expect(seen[seen.length - 1]).to.equal('');
   });
 });
