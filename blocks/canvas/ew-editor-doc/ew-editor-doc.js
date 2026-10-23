@@ -96,7 +96,6 @@ export class EwEditorDoc extends LitElement {
       this._lastDocBlockIndex = undefined;
       this._lastDocSelKey = undefined;
       this._lastBroadcastNodeKey = undefined;
-      canvasBus.editorHtmlState.emit('');
     }
   }
 
@@ -108,6 +107,9 @@ export class EwEditorDoc extends LitElement {
     }
     if (this._controllerCtx?.reloadTimer) {
       clearTimeout(this._controllerCtx.reloadTimer);
+    }
+    if (this._controllerCtx?.metadataRerenderTimer) {
+      clearTimeout(this._controllerCtx.metadataRerenderTimer);
     }
     this._controllerCtx = undefined;
   }
@@ -230,7 +232,9 @@ export class EwEditorDoc extends LitElement {
       }
     }
     const key = node ? `${node.anchorType}:${node.proseIndex}` : 'null';
-    const scrollToNode = scrollIntoView && Boolean(node);
+    // Acknowledge iframe selections without scrolling the pane the user is already in.
+    const scrollToNode = scrollIntoView && Boolean(node)
+      && !this._controllerCtx?.mirroringFromIframe;
     // A real node anchor re-scrolls on every re-select; the content fallback only when
     // the target block changes, so dragging a text selection doesn't spam the iframe.
     const forceScroll = scrollToNode && !contentFallback;
@@ -388,6 +392,7 @@ export class EwEditorDoc extends LitElement {
     this._unbindSectionName?.();
     this._unbindSectionName = undefined;
     this._proseContext = undefined;
+    canvasBus.editorHtmlState.emit('');
   }
 
   async _loadEditor() {
@@ -428,9 +433,9 @@ export class EwEditorDoc extends LitElement {
             mediaBusImage(ctx),
             createExtensionsBridgePlugin({ forceSave: () => this.forceSave() }),
             createTrackingPlugin(
-              () => {
+              (details) => {
                 const body = this._controllerCtx
-                  ? updateDocument(this._controllerCtx)
+                  ? updateDocument(this._controllerCtx, details)
                   : getInstrumentedHTML(this._proseContext?.view);
                 if (body) canvasBus.editorHtmlState.emit(body);
               },

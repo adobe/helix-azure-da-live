@@ -6,7 +6,7 @@ import { sessionErrorFromResponse } from './load-editor-doc.js';
 export async function loadLocalDocument(sourceUrl) {
   const resp = await fetchDoc(sourceUrl);
   const failure = sessionErrorFromResponse(resp);
-  if (failure) throw new Error(failure.error);
+  if (failure && !failure.notFound) throw new Error(failure.error);
   const missing = resp.status === 404;
   const body = missing ? EMPTY_DOC : await resp.text();
   const ydoc = new Y.Doc();
