@@ -246,7 +246,7 @@ export const getSheetByIndex = (json, index = 0) => {
   if (json[':type'] !== 'multi-sheet') {
     return json.data;
   }
-  return json[Object.keys(json)[index]]?.data;
+  return json[json[':names']?.[index]]?.data;
 };
 
 export const getSheetByName = (json, name) => {
@@ -315,16 +315,19 @@ export async function contentLogin(owner, repo) {
   }
 }
 
-export async function livePreviewLogin(owner, repo) {
+export async function livePreviewLogin(owner, repo, branch = 'main', getUrl = getLivePreviewUrl) {
   try {
-    const { accessToken } = await initIms();
-    await fetch(`${getLivePreviewUrl(owner, repo)}/gimme_cookie`, {
+    const token = await getAuthToken();
+    if (!token) return false;
+    const resp = await fetch(`${getUrl(owner, repo, branch)}/gimme_cookie`, {
       credentials: 'include',
-      headers: { Authorization: `Bearer ${accessToken.token}` },
+      headers: { Authorization: `Bearer ${token}` },
     });
+    return resp.ok;
   } catch (e) {
     // eslint-disable-next-line no-console
     console.warn('Live Preview Login failed', e);
+    return false;
   }
 }
 
@@ -378,15 +381,29 @@ export const fetchDaConfigs = (() => {
     return resp.json();
   };
 
+  const cacheConfig = (key, org, site) => {
+    configCache[key] = fetchConfig(org, site).then(
+      (result) => {
+        if (result.error) delete configCache[key];
+        return result;
+      },
+      (error) => {
+        delete configCache[key];
+        throw error;
+      },
+    );
+    return configCache[key];
+  };
+
   return ({ org, site }) => {
     if (!org) return [Promise.resolve(null)];
 
     // Set the org config promise if it does not exist
-    configCache[`/${org}`] ??= fetchConfig(org);
+    configCache[`/${org}`] ??= cacheConfig(`/${org}`, org);
 
     if (site) {
       // Set the site config promise if it does not exist
-      configCache[`/${org}/${site}`] ??= fetchConfig(org, site);
+      configCache[`/${org}/${site}`] ??= cacheConfig(`/${org}/${site}`, org, site);
     }
 
     // return array of cached configs (org = 0, site = 1)

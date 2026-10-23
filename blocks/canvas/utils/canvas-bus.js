@@ -52,6 +52,7 @@ export const canvasBus = Object.freeze({
   mergeConflictsState: createChannel(),
   editorDocState: createChannel(),
   editorViewState: createChannel({ replay: true }),
+  branchState: createChannel({ replay: true }),
   blockEditState: createChannel({ replay: true }),
   toolbarSurfaceState: createChannel({ replay: true }),
   // Doc selection does not claim focus; an iframe selection does.
@@ -63,6 +64,7 @@ export const canvasBus = Object.freeze({
   },
   editorProseSelectState: createChannel(),
   toolPanelViewState: createChannel({ replay: true }),
+  comparisonState: createChannel(),
 
   // Replays because the split layout re-appends `ew-editor-doc` on every hash
   // sync, so a late resubscribe would otherwise miss an already-emitted port.
