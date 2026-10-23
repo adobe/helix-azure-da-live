@@ -1,10 +1,12 @@
 import { LitElement, html } from 'da-lit';
 import { getNx } from '../../../scripts/utils.js';
+import { SUPPORTED_IMAGE_TYPES } from '../../shared/constants.js';
 import { commandsFor, COMMAND_BY_ID } from '../editor-utils/command-defs.js';
 import {
   getBlockTypePickerValue,
   getLinkInfoInSelection,
   applyLink,
+  isImageNodeSelected,
 } from '../editor-utils/command-helpers.js';
 import { toolbarController } from '../editor-utils/toolbar-controller.js';
 
@@ -263,7 +265,7 @@ class EwSelectionToolbar extends LitElement {
   _triggerUpload() {
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = 'image/svg+xml,image/png,image/jpeg,image/gif';
+    input.accept = SUPPORTED_IMAGE_TYPES.join(',');
     input.addEventListener('change', (e) => this._onFileSelected(e), { once: true });
     input.click();
   }
@@ -316,7 +318,10 @@ class EwSelectionToolbar extends LitElement {
   }
 
   _renderAddImageItem(item) {
-    if (!this._hasAemAssets) return this._renderToolbarButton(item);
+    const imageItem = this.view && isImageNodeSelected(this.view.state)
+      ? { ...item, label: 'Replace image', icon: 'image' }
+      : item;
+    if (!this._hasAemAssets) return this._renderToolbarButton(imageItem);
     const menuItems = [
       { id: 'upload', label: 'Upload' },
       { id: 'aem-assets', label: 'AEM Assets' },
@@ -328,8 +333,8 @@ class EwSelectionToolbar extends LitElement {
           else this._openAemAssets();
         }}>
         <button slot="trigger" type="button" class="toolbar-btn"
-          aria-label=${item.label} title=${item.label}>
-          ${this._icon(item.icon)}
+          aria-label=${imageItem.label} title=${imageItem.label}>
+          ${this._icon(imageItem.icon)}
         </button>
       </nx-menu>
     `;
@@ -383,10 +388,10 @@ class EwSelectionToolbar extends LitElement {
     const renderImageItems = (items) => items.map((i) => this._renderImageItem(i));
 
     const inWysiwyg = this.activeSurface === 'wysiwyg';
-    // The iframe owns block insertion, so "add image" is doc-only; editing a
-    // selected image's alt text stays available in wysiwyg.
+    // The iframe owns insertion, but a selected image can be replaced here.
     const imageItems = inWysiwyg
-      ? IMAGE_ITEMS.filter((i) => i.id !== 'image-add')
+      ? IMAGE_ITEMS.filter((i) => i.id !== 'image-add'
+        || (this.view && isImageNodeSelected(this.view.state)))
       : IMAGE_ITEMS;
 
     // `wysiwyg` marks sections offered while editing in the WYSIWYG iframe. The
