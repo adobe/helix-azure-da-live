@@ -1,6 +1,7 @@
 import { expect } from '@esm-bundle/chai';
 import sinon from 'sinon';
 import { setNx } from '../../../../scripts/utils.js';
+import { canvasBus } from '../../../../blocks/canvas/utils/canvas-bus.js';
 
 setNx('/test/fixtures/nx', { hostname: 'example.com' });
 const { syncCanvasEditorsToHash } = await import('../../../../blocks/canvas/canvas.js');
@@ -39,7 +40,15 @@ describe('canvas navigation with pending source saves', () => {
 
   it('retains the editor and restores its hash after a failed save', async () => {
     editor.forceSave.resolves({ ok: false, error: 'Write denied' });
-    await syncCanvasEditorsToHash({ mountRoot, header, state: { org: 'org', site: 'site', path: 'next' } });
+    const onBranch = sinon.spy();
+    const unsubscribe = canvasBus.branchState.subscribe(onBranch);
+    onBranch.resetHistory();
+    try {
+      await syncCanvasEditorsToHash({ mountRoot, header, state: { org: 'org', site: 'site', path: 'next' } });
+      expect(onBranch.called).to.be.false;
+    } finally {
+      unsubscribe();
+    }
     expect(editor.remove.called).to.be.false;
     expect(window.location.hash).to.equal('#/org/site/current');
     expect(header.undoAvailable).to.be.true;
