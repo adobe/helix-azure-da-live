@@ -130,6 +130,21 @@ describe('canvas offline source editor', () => {
     }
   });
 
+  it('saves the offline source before comparison and propagates save failures', async () => {
+    sinon.stub(el, '_showSaveError').resolves();
+    await el._loadEditor();
+    const context = { org: 'localorg', site: 'localsite', path: 'page' };
+    el._proseContext.view.dispatch(el._proseContext.view.state.tr.insertText('Compare ', 1));
+    saveStatus = 403;
+    expect((await el.saveForComparison(context)).ok).to.be.false;
+    expect(el.hasPendingSave).to.be.true;
+    saveStatus = 200;
+    expect(await el.saveForComparison(context)).to.deep.equal({ ok: true });
+    expect(writes.at(-1).body).to.include('Compare Title');
+    expect(el.hasPendingSave).to.be.false;
+    expect(websocket.called).to.be.false;
+  });
+
   it('loads read-only documents without creating a source writer', async () => {
     el.session.permissions = ['read'];
     await el._loadEditor();
