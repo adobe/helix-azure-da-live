@@ -45,7 +45,7 @@ describe('Other origins', () => {
   });
 
   it('Sets Live Preview Domain', () => {
-    expect(LIVE_PREVIEW_DOMAIN).to.equal('preview.da.live');
+    expect(LIVE_PREVIEW_DOMAIN).to.equal('da-preview.az-boxa.aem.live');
   });
 
   it('Sets DA Etc Origin', () => {
@@ -76,13 +76,13 @@ describe('SUPPORTED_FILES', () => {
 describe('getLivePreviewUrl', () => {
   it('Builds a https URL for the prod preview domain', () => {
     expect(getLivePreviewUrl('adobecom', 'da-bacom')).to.equal(
-      'https://main--da-bacom--adobecom.preview.da.live',
+      'https://main--da-bacom--adobecom.da-preview.az-boxa.aem.live',
     );
   });
 
   it('Builds a URL using the given branch instead of main', () => {
     expect(getLivePreviewUrl('adobecom', 'da-bacom', 'feature-branch')).to.equal(
-      'https://feature-branch--da-bacom--adobecom.preview.da.live',
+      'https://feature-branch--da-bacom--adobecom.da-preview.az-boxa.aem.live',
     );
   });
 });

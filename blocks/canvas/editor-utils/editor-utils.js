@@ -584,7 +584,7 @@ export function getPreviewOrigin(org, repo, branch = 'main') {
   const hostname = window?.location?.hostname ?? '';
   const domain = hostname.endsWith('aem.page') || hostname.endsWith('localhost')
     ? 'stage-preview.da.live'
-    : 'preview.da.live';
+    : 'da-preview.az-boxa.aem.live';
   return `https://${normalizeBranch(branch)}--${repo}--${org}.${domain}`;
 }
 

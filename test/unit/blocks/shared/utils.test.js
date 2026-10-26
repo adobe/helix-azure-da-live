@@ -302,7 +302,7 @@ describe('livePreviewLogin', () => {
     expect(await livePreviewLogin('org', 'site', 'feat')).to.equal(true);
 
     expect(calls).to.have.lengthOf(1);
-    expect(calls[0].url).to.equal('https://feat--site--org.preview.da.live/gimme_cookie');
+    expect(calls[0].url).to.equal('https://feat--site--org.da-preview.az-boxa.aem.live/gimme_cookie');
     expect(calls[0].headers.Authorization).to.equal('Bearer T1');
   });
 

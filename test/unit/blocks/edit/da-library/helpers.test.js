@@ -73,17 +73,17 @@ describe('da-library/helpers exports', () => {
   describe('getPreviewUrl', () => {
     it('Routes AEM-hosted preview URLs through the DA preview proxy', () => {
       const url = 'https://main--repo--org.aem.live/page';
-      expect(getPreviewUrl(url)).to.equal('https://main--repo--org.preview.da.live/page');
+      expect(getPreviewUrl(url)).to.equal('https://main--repo--org.da-preview.az-boxa.aem.live/page');
     });
 
     it('Rewrites a content.da.live URL to the DA preview proxy', () => {
       expect(getPreviewUrl('https://content.da.live/org/site/folder/page'))
-        .to.equal('https://main--site--org.preview.da.live/folder/page');
+        .to.equal('https://main--site--org.da-preview.az-boxa.aem.live/folder/page');
     });
 
     it('Rewrites an admin.da.live URL to the DA preview proxy', () => {
       expect(getPreviewUrl('https://admin.da.live/source/org/site/folder/page'))
-        .to.equal('https://main--site--org.preview.da.live/folder/page');
+        .to.equal('https://main--site--org.da-preview.az-boxa.aem.live/folder/page');
     });
 
     it('Returns false for an unrelated origin', () => {

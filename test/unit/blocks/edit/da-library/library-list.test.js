@@ -44,7 +44,7 @@ describe('da-library/helpers getLibraryList', () => {
 
     const [plugin] = await getLibraryList();
     expect(plugin.sources).to.deep.equal([
-      'https://evil-example-x--refsite--reforg.preview.da.live/tools/plugin.html',
+      'https://evil-example-x--refsite--reforg.da-preview.az-boxa.aem.live/tools/plugin.html',
     ]);
   });
 });

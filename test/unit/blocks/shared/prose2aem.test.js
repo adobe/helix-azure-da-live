@@ -73,6 +73,7 @@ describe('prose2aem image URL handling', () => {
     { host: 'content.da.live', contentStore: true },
     { host: 'stage-content.da.live', contentStore: true },
     { host: 'main--site--org.preview.da.live' },
+    { host: 'main--site--org.da-preview.az-boxa.aem.live' },
     { host: 'main--site--org.stage-preview.da.live' },
     { host: 'example.da.live' },
     { host: 'content.da.live.example.com' },

@@ -4,7 +4,7 @@ import { ensurePreviewProxySession, getPreviewProxyDetails, toPreviewProxyUrl } 
 describe('getPreviewProxyDetails', () => {
   it('rewrites a relative path using fallback org/site/branch', () => {
     const details = getPreviewProxyDetails('/tools/plugins/tool/index.html', { org: 'org', site: 'site', branch: 'feat' });
-    expect(details.url).to.equal('https://feat--site--org.preview.da.live/tools/plugins/tool/index.html');
+    expect(details.url).to.equal('https://feat--site--org.da-preview.az-boxa.aem.live/tools/plugins/tool/index.html');
     expect(details.org).to.equal('org');
     expect(details.site).to.equal('site');
     expect(details.branch).to.equal('feat');
@@ -13,7 +13,7 @@ describe('getPreviewProxyDetails', () => {
 
   it('defaults branch to main when no fallback branch is given', () => {
     const details = getPreviewProxyDetails('/x', { org: 'org', site: 'site' });
-    expect(details.url).to.equal('https://main--site--org.preview.da.live/x');
+    expect(details.url).to.equal('https://main--site--org.da-preview.az-boxa.aem.live/x');
   });
 
   it('returns the raw input for a relative path with no org/site fallback', () => {
@@ -24,7 +24,7 @@ describe('getPreviewProxyDetails', () => {
 
   it('rewrites an aem.live URL, preserving query and hash', () => {
     const details = getPreviewProxyDetails('https://main--site--org.aem.live/path?a=1#frag');
-    expect(details.url).to.equal('https://main--site--org.preview.da.live/path?a=1#frag');
+    expect(details.url).to.equal('https://main--site--org.da-preview.az-boxa.aem.live/path?a=1#frag');
     expect(details.org).to.equal('org');
     expect(details.site).to.equal('site');
     expect(details.branch).to.equal('main');
@@ -32,19 +32,30 @@ describe('getPreviewProxyDetails', () => {
 
   it('rewrites an aem.page URL', () => {
     const details = getPreviewProxyDetails('https://feat--site--org.aem.page/path');
-    expect(details.url).to.equal('https://feat--site--org.preview.da.live/path');
+    expect(details.url).to.equal('https://feat--site--org.da-preview.az-boxa.aem.live/path');
   });
 
   it('rewrites an aem.live URL', () => {
     const details = getPreviewProxyDetails('https://feat--site--org.aem.live/path');
-    expect(details.url).to.equal('https://feat--site--org.preview.da.live/path');
+    expect(details.url).to.equal('https://feat--site--org.da-preview.az-boxa.aem.live/path');
   });
 
   it('parses an already-proxied preview.da.live URL', () => {
     const details = getPreviewProxyDetails('https://main--site--org.preview.da.live/path');
+    expect(details.url).to.equal('https://main--site--org.da-preview.az-boxa.aem.live/path');
     expect(details.org).to.equal('org');
     expect(details.site).to.equal('site');
     expect(details.branch).to.equal('main');
+    expect(details.pathname).to.equal('/path');
+  });
+
+  it('preserves an already-proxied Azure preview URL, including query and hash', () => {
+    const input = 'https://feat--site--org.da-preview.az-boxa.aem.live/path?a=1#frag';
+    const details = getPreviewProxyDetails(input);
+    expect(details.url).to.equal(input);
+    expect(details.org).to.equal('org');
+    expect(details.site).to.equal('site');
+    expect(details.branch).to.equal('feat');
     expect(details.pathname).to.equal('/path');
   });
 
@@ -56,13 +67,17 @@ describe('getPreviewProxyDetails', () => {
   });
 
   it('does not parse a lookalike preview host', () => {
-    const input = 'https://main--site--org.preview.da.live.attacker.example/path';
-    expect(getPreviewProxyDetails(input).url).to.equal(input);
+    [
+      'https://main--site--org.preview.da.live.attacker.example/path',
+      'https://main--site--org.da-preview.az-boxa.aem.live.attacker.example/path',
+    ].forEach((input) => {
+      expect(getPreviewProxyDetails(input).url).to.equal(input);
+    });
   });
 
   it('rewrites a content.da.live URL', () => {
     const details = getPreviewProxyDetails('https://content.da.live/org/site/path/to/page?a=1', { branch: 'feat' });
-    expect(details.url).to.equal('https://feat--site--org.preview.da.live/path/to/page?a=1');
+    expect(details.url).to.equal('https://feat--site--org.da-preview.az-boxa.aem.live/path/to/page?a=1');
     expect(details.org).to.equal('org');
     expect(details.site).to.equal('site');
   });
@@ -74,12 +89,12 @@ describe('getPreviewProxyDetails', () => {
 
   it('rewrites a stage-content.da.live URL', () => {
     const details = getPreviewProxyDetails('https://stage-content.da.live/org/site/path', { branch: 'feat' });
-    expect(details.url).to.equal('https://feat--site--org.preview.da.live/path');
+    expect(details.url).to.equal('https://feat--site--org.da-preview.az-boxa.aem.live/path');
   });
 
   it('rewrites an admin.da.live URL', () => {
     const details = getPreviewProxyDetails('https://admin.da.live/source/org/site/path/to/page', { branch: 'feat' });
-    expect(details.url).to.equal('https://feat--site--org.preview.da.live/path/to/page');
+    expect(details.url).to.equal('https://feat--site--org.da-preview.az-boxa.aem.live/path/to/page');
     expect(details.org).to.equal('org');
     expect(details.site).to.equal('site');
   });
@@ -91,7 +106,7 @@ describe('getPreviewProxyDetails', () => {
 
   it('rewrites a stage-admin.da.live URL', () => {
     const details = getPreviewProxyDetails('https://stage-admin.da.live/source/org/site/path', { branch: 'feat' });
-    expect(details.url).to.equal('https://feat--site--org.preview.da.live/path');
+    expect(details.url).to.equal('https://feat--site--org.da-preview.az-boxa.aem.live/path');
   });
 
   it('uses a custom getUrl origin builder when provided', () => {
@@ -125,7 +140,7 @@ describe('getPreviewProxyDetails', () => {
 
   it('proxies same-org URLs when currentOrg is set (case-insensitive)', () => {
     const details = getPreviewProxyDetails('https://main--tools--org.aem.live/p', { currentOrg: 'ORG' });
-    expect(details.url).to.equal('https://main--tools--org.preview.da.live/p');
+    expect(details.url).to.equal('https://main--tools--org.da-preview.az-boxa.aem.live/p');
     expect(details.org).to.equal('org');
   });
 
@@ -138,14 +153,14 @@ describe('getPreviewProxyDetails', () => {
 
   it('always proxies relative paths against the fallback org', () => {
     const details = getPreviewProxyDetails('/p', { org: 'org', site: 'site', currentOrg: 'org' });
-    expect(details.url).to.equal('https://main--site--org.preview.da.live/p');
+    expect(details.url).to.equal('https://main--site--org.da-preview.az-boxa.aem.live/p');
   });
 });
 
 describe('toPreviewProxyUrl', () => {
   it('returns just the rewritten url', () => {
     const url = toPreviewProxyUrl('https://main--site--org.aem.live/path');
-    expect(url).to.equal('https://main--site--org.preview.da.live/path');
+    expect(url).to.equal('https://main--site--org.da-preview.az-boxa.aem.live/path');
   });
 });
 
@@ -216,7 +231,7 @@ describe('ensurePreviewProxySession', () => {
     expect(await ensurePreviewProxySession('https://feat--site--org.aem.live/path')).to.equal(true);
 
     expect(calls).to.have.lengthOf(1);
-    expect(calls[0].url).to.equal('https://feat--site--org.preview.da.live/gimme_cookie');
+    expect(calls[0].url).to.equal('https://feat--site--org.da-preview.az-boxa.aem.live/gimme_cookie');
     expect(calls[0].headers.Authorization).to.equal('Bearer T1');
   });
 
@@ -238,7 +253,7 @@ describe('ensurePreviewProxySession', () => {
 
     await ensurePreviewProxySession('/tools/plugins/tool/index.html', { org: 'org', site: 'site', branch: 'feat' });
 
-    expect(calls).to.deep.equal(['https://feat--site--org.preview.da.live/gimme_cookie']);
+    expect(calls).to.deep.equal(['https://feat--site--org.da-preview.az-boxa.aem.live/gimme_cookie']);
   });
 
   it('is a no-op for a relative path with no org/site fallback', async () => {

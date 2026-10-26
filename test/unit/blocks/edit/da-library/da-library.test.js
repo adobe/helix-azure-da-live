@@ -210,7 +210,7 @@ describe('da-library element', () => {
 
   it('handlePluginClick awaits the preview proxy session before activating inline/dialog plugins', async () => {
     await fixture([]);
-    const plugin = { name: 'plug', experience: 'inline', sources: ['https://main--repo--org.preview.da.live/x'] };
+    const plugin = { name: 'plug', experience: 'inline', sources: ['https://main--repo--org.da-preview.az-boxa.aem.live/x'] };
     await el.handlePluginClick(plugin);
     expect(el._active).to.equal(plugin);
   });
@@ -461,7 +461,7 @@ describe('da-library handleOpenPreview', () => {
     const item = { name: 'Marquee', path: 'https://main--repo--org.aem.live/page' };
     await el.handleOpenPreview(item);
     expect(el._preview.name).to.equal('Marquee');
-    expect(el._preview.url).to.equal('https://main--repo--org.preview.da.live/page');
+    expect(el._preview.url).to.equal('https://main--repo--org.da-preview.az-boxa.aem.live/page');
     expect(el._preview.ok).to.be.true;
   });
 
