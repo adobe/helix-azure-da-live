@@ -101,6 +101,11 @@ export default class DaPreview extends LitElement {
       }
       // Give up after 6 attempts
       if (count > 6) {
+        // eslint-disable-next-line no-console
+        console.warn('DA Preview: No handshake response. Check that the site initializes dapreview.js and allows the editor origin.', {
+          previewUrl: target.src,
+          editorOrigin: window.location.origin,
+        });
         this._message = {
           url: 'https://docs.da.live/authors/reference/live-preview',
           text: 'Could not load live preview',

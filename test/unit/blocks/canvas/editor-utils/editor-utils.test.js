@@ -15,6 +15,7 @@ setNx('/test/fixtures/nx', { hostname: 'example.com' });
 
 let getPreviewOrigin;
 let fetchWysiwygBranch;
+let fetchWysiwygCookie;
 let parseSections;
 let getInstrumentedHTML;
 let mediaBusImage;
@@ -26,12 +27,43 @@ before(async () => {
   const mod = await import('../../../../../blocks/canvas/editor-utils/editor-utils.js');
   getPreviewOrigin = mod.getPreviewOrigin;
   fetchWysiwygBranch = mod.fetchWysiwygBranch;
+  fetchWysiwygCookie = mod.fetchWysiwygCookie;
   parseSections = mod.parseSections;
   updateDocument = mod.updateDocument;
   getEditor = mod.getEditor;
   mirror = mod.dispatchMirror;
   getInstrumentedHTML = mod.getInstrumentedHTML;
   ({ default: mediaBusImage } = await import('../../../../../blocks/canvas/ew-editor-doc/prose-plugins/mediaBusImage.js'));
+});
+
+describe('fetchWysiwygCookie', () => {
+  afterEach(() => {
+    sinon.restore();
+  });
+
+  it('authenticates only the preview proxy, not the legacy content service', async () => {
+    const fetchStub = sinon.stub(window, 'fetch').resolves(new Response('', { status: 200 }));
+    await fetchWysiwygCookie({ org: 'org', repo: 'site', branch: 'feat', token: 'test-token' });
+
+    expect(fetchStub.calledOnce).to.be.true;
+    expect(fetchStub.firstCall.args).to.deep.equal([
+      `${getPreviewOrigin('org', 'site', 'feat')}/gimme_cookie`,
+      { method: 'GET', credentials: 'include', headers: { Authorization: 'Bearer test-token' } },
+    ]);
+  });
+
+  it('surfaces preview authentication failures without requesting a content cookie', async () => {
+    const fetchStub = sinon.stub(window, 'fetch').resolves(new Response('', { status: 403 }));
+    let error;
+    try {
+      await fetchWysiwygCookie({ org: 'org', repo: 'site', token: 'test-token' });
+    } catch (err) {
+      error = err;
+    }
+
+    expect(error?.message).to.equal('gimme_cookie preview failed: status 403');
+    expect(fetchStub.calledOnce).to.be.true;
+  });
 });
 
 describe('getInstrumentedHTML media bus images', () => {

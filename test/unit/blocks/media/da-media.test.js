@@ -141,21 +141,28 @@ describe('media loading', () => {
       await init(container);
 
       expect(requests).to.include(sourceUrl);
+      expect(requests.some((url) => url.includes('content.da.live'))).to.equal(false);
       expect(createObjectURL.calledOnce).to.equal(true);
       expect(await createObjectURL.firstCall.args[0].text()).to.equal('media-data');
       expect(container.querySelector('da-media').details.contentUrl).to.equal('blob:media-test');
     });
   });
 
-  it('Keeps the content URL for legacy media', async () => {
+  it('Loads media through the source API even without an upgrade response', async () => {
     setHash('/mediaorg/legacysite/images/logo.svg');
-    window.fetch = async () => new Response('');
+    const requests = [];
+    window.fetch = async (url) => {
+      requests.push(url);
+      return new Response('media-data');
+    };
 
     await init(container);
 
     expect(container.querySelector('da-media').details.contentUrl)
-      .to.equal('https://content.da.live/mediaorg/legacysite/images/logo.svg');
-    expect(createObjectURL.called).to.equal(false);
+      .to.equal('blob:media-test');
+    expect(createObjectURL.calledOnce).to.equal(true);
+    expect(requests.some((url) => url.includes('/source/'))).to.equal(true);
+    expect(requests.some((url) => url.includes('content.da.live'))).to.equal(false);
   });
 
   it('Replaces the image and title when the hash changes without reloading', async () => {
@@ -169,14 +176,14 @@ describe('media loading', () => {
     const media = container.querySelector('da-media');
     expect(media).not.to.equal(firstMedia);
     expect(media.details.contentUrl)
-      .to.equal('https://content.da.live/mediaorg/legacysite/images/second.png');
+      .to.equal('blob:media-test');
     expect(container.querySelector('da-title').details.name).to.equal('second.png');
     expect(container.children.length).to.equal(2);
 
     document.body.appendChild(media);
     await media.updateComplete;
     expect(media.shadowRoot.querySelector('img').getAttribute('src'))
-      .to.equal('https://content.da.live/mediaorg/legacysite/images/second.png');
+      .to.equal('blob:media-test');
     expect(document.title).to.equal('View second.png - Experience Workspace');
     media.remove();
   });
@@ -216,7 +223,7 @@ describe('media loading', () => {
     let media = container.querySelector('da-media');
     await media.updateComplete;
     expect(media.shadowRoot.querySelector('video source').getAttribute('src'))
-      .to.equal('https://content.da.live/mediaorg/legacysite/videos/movie.mp4');
+      .to.equal('blob:media-test');
     expect(document.title).to.equal('View movie.mp4 - Experience Workspace');
 
     await navigate('/mediaorg/legacysite/images/second.png');
@@ -224,7 +231,7 @@ describe('media loading', () => {
     await media.updateComplete;
     expect(media.shadowRoot.querySelector('video')).to.equal(null);
     expect(media.shadowRoot.querySelector('img').getAttribute('src'))
-      .to.equal('https://content.da.live/mediaorg/legacysite/images/second.png');
+      .to.equal('blob:media-test');
   });
 
   it('Does not let an older image request replace a newer navigation', async () => {

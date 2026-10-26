@@ -1,4 +1,4 @@
-import { DA_ORIGIN, CON_ORIGIN, DA_ETC_ORIGIN, getLivePreviewUrl, AEM_ORIGIN } from './constants.js';
+import { DA_ORIGIN, DA_ETC_ORIGIN, getLivePreviewUrl, AEM_ORIGIN } from './constants.js';
 import { getNx, getNx2Api } from '../../scripts/utils.js';
 
 const DA_ORIGINS = ['https://da.az-boxa.aem.live'];
@@ -300,19 +300,6 @@ export function replyToGetSelection({
     return;
   }
   port.postMessage({ action: 'error', details: error });
-}
-
-export async function contentLogin(owner, repo) {
-  try {
-    const { accessToken } = await initIms();
-    await fetch(`${CON_ORIGIN}/${owner}/${repo}/.gimme_cookie`, {
-      credentials: 'include',
-      headers: { Authorization: `Bearer ${accessToken.token}` },
-    });
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('Content Login failed', e);
-  }
 }
 
 export async function livePreviewLogin(owner, repo, branch = 'main', getUrl = getLivePreviewUrl) {

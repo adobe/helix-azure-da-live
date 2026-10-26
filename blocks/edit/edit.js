@@ -1,5 +1,5 @@
 import getPathDetails from '../shared/pathDetails.js';
-import { contentLogin, livePreviewLogin } from '../shared/utils.js';
+import { livePreviewLogin } from '../shared/utils.js';
 import { getNx, getNx2Api, getNxEWFlags } from '../../scripts/utils.js';
 
 import './da-title/da-title.js';
@@ -72,7 +72,6 @@ export async function setUI(el) {
   prosePromise ??= import('./prose/index.js');
 
   const { owner, repo } = details;
-  const contentCookiePromise = contentLogin(owner, repo);
 
   const resp = await docPromise;
   if (loadCount !== editorLoadCount) return;
@@ -109,9 +108,6 @@ export async function setUI(el) {
     doc = DOMPARSER.parseFromString(respText, 'text/html');
   }
 
-  // If content cookie hasn't loaded yet, wait for it
-  await contentCookiePromise;
-  if (loadCount !== editorLoadCount) return;
   if (!await flushPendingEditor(currentContent) || loadCount !== editorLoadCount) return;
   currentContent?.destroyEditor?.();
 

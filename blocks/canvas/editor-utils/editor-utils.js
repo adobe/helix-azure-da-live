@@ -1,7 +1,7 @@
 import { TextSelection } from 'da-y-wrapper';
 import prose2aem from '../../shared/prose2aem.js';
 import { wrapTablesInWrappers } from '../../shared/version/compare.js';
-import { getNx, getNx2 } from '../../../scripts/utils.js';
+import { getNx2 } from '../../../scripts/utils.js';
 import { daFetch, fetchDaConfigs, getFirstSheet } from '../../shared/utils.js';
 import { toolbarController } from './toolbar-controller.js';
 import {
@@ -14,7 +14,6 @@ import { MESSAGE_TYPES } from '../utils/quick-edit-messages.js';
 import { canvasBus, registerEditorSelectEnricher } from '../utils/canvas-bus.js';
 import { normalizeBranch } from '../utils/branch.js';
 
-const { DA_CONTENT } = await import(`${getNx()}/utils/utils.js`);
 const { getImageDocumentVersion } = await import(`${getNx2()}/public/utils/quick-edit-images.js`);
 
 /**
@@ -628,21 +627,9 @@ export async function fetchWysiwygCookie({ org, repo, token, branch = 'main' }) 
     throw new Error('fetchWysiwygCookie: org, repo, and token required');
   }
   const previewUrl = `${getPreviewOrigin(org, repo, branch)}/gimme_cookie`;
-  const contentUrl = `${DA_CONTENT}/${org}/${repo}/.gimme_cookie`;
 
   const previewResp = await daFetch(previewUrl, { method: 'GET', credentials: 'include', headers: { Authorization: `Bearer ${token}` } });
   if (!previewResp.ok) {
     throw new Error(`gimme_cookie preview failed: status ${previewResp.status}`);
-  }
-
-  try {
-    const contentResp = await fetch(contentUrl, { method: 'GET', credentials: 'include', headers: { Authorization: `Bearer ${token}` } });
-    if (!contentResp.ok) {
-      // eslint-disable-next-line no-console
-      console.warn('[canvas:wysiwyg] content gimme_cookie non-ok (non-fatal)', contentResp.status);
-    }
-  } catch (e) {
-    // eslint-disable-next-line no-console
-    console.warn('[canvas:wysiwyg] content gimme_cookie failed (non-fatal)', e?.message);
   }
 }

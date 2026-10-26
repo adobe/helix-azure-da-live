@@ -52,6 +52,7 @@ describe('legacy offline navigation', () => {
     expect(window.view.dom.isContentEditable).to.be.true;
     expect(content.hasPendingSave).to.be.false;
     expect(fetchStub.getCalls().some((call) => call.args[1]?.method === 'POST')).to.be.false;
+    expect(fetchStub.getCalls().some((call) => String(call.args[0]).includes('content.da.live'))).to.be.false;
     expect(websocket.called).to.be.false;
   });
 

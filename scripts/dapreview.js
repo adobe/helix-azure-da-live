@@ -48,12 +48,14 @@ export default async function daPreview(loadPage) {
 
   function initPort(e) {
     if (e.origin !== 'https://da.live'
+      && e.origin !== 'https://da.az-boxa.aem.live'
       && e.origin !== 'http://localhost:3000'
       && e.origin !== 'https://localhost'
       && !e.origin.match(/^https:\/\/[a-z0-9-]+--da-live--adobe\.aem\.(page|live)$/)
+      && !e.origin.match(/^https:\/\/[a-z0-9]{1,8}--helix-azure-da-live--adobe\.az-boxa\.aem\.live$/)
     ) {
       // eslint-disable-next-line no-console
-      console.warn('DA Preview: Origin not allowed');
+      console.warn('DA Preview: Origin not allowed', e.origin);
       return;
     }
 
