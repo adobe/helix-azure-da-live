@@ -205,30 +205,6 @@ export default class DaSites extends LitElement {
           <h2>Recents</h2>
         </div>
         ${this._recents?.length > 0 ? this.renderSites(this._recents) : this.renderEmpty()}
-        <div class="da-site-header">
-          <h2>Sites</h2>
-          ${this._recents?.length > 0 ? this.renderGo() : nothing}
-        </div>
-        <div class="da-site-sandbox-new">
-          <a class="da-double-card da-double-card-sandbox" href="#/aem-sandbox/block-collection">
-            <picture>
-              <img class="da-double-card-bg" src="/blocks/browse/da-sites/img/bg-sandbox-card.avif" width="800" height="534" alt="" />
-            </picture>
-            <div class="da-double-card-fg">
-              <img src="/blocks/browse/da-sites/img/sandbox-icon-gray.svg" width="80" height="60" alt=""/>
-              <h3>Sandbox</h3>
-            </div>
-          </a>
-          <a class="da-double-card da-double-card-add-new" href="/start">
-            <picture>
-              <img class="da-double-card-bg" src="/blocks/browse/da-sites/img/bg-new-card.avif" width="800" height="546" alt="" />
-            </picture>
-            <div class="da-double-card-fg">
-              <img src="/blocks/browse/da-sites/img/add-new-icon-gray.svg" width="80" height="60" alt=""/>
-              <h3>Add new</h3>
-            </div>
-          </a>
-        </div>
       </div>
       ${this._status ? this.renderStatus() : nothing}
     `;
